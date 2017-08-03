@@ -7,6 +7,7 @@ public class Pickup : MonoBehaviour
 {
     public float score = 0, lifeTime = 10;
     private GameObject sphere;
+    private SnakeHead sHead;
     private Text scoreText;
 
     private void Start()
@@ -14,6 +15,7 @@ public class Pickup : MonoBehaviour
         scoreText = GameObject.Find("scoreText").GetComponent<Text>();
         sphere = GameObject.Find("Sphere");
         gameObject.GetComponent<MeshCollider>().isTrigger = true;
+        sHead = GameObject.Find("Snake").GetComponent<SnakeHead>();
         StartCoroutine("pickupDecay");
        
     }
@@ -22,7 +24,7 @@ public class Pickup : MonoBehaviour
     {
         GameObject.Find("pickupspotlight").transform.position = (transform.position - sphere.transform.position).normalized * 2;
         GameObject.Find("pickupspotlight").transform.rotation = Quaternion.LookRotation(-transform.position);
-        List<GameObject> list = GameObject.Find("Snake Head").GetComponent<SnakeHead>().getPartsList();
+        List<GameObject> list = sHead.getPartsList();
 
             if (Vector3.Distance(sphere.transform.position, transform.position) < 1f)
             {
@@ -30,25 +32,16 @@ public class Pickup : MonoBehaviour
                 transform.rotation = Quaternion.LookRotation(transform.forward, transform.position - sphere.transform.position);
             }
             transform.RotateAround(transform.position, (transform.position - sphere.transform.position).normalized, 45*Time.deltaTime);
-            if (list.Count > 1)
-            {
-                if (Vector3.Distance(transform.position, list[0].transform.position) < 0.1f)
+
+            if (Vector3.Distance(transform.position, list[0].transform.position) < 0.1f)
                 {
                     transform.position = Random.onUnitSphere;
                     transform.rotation = Quaternion.LookRotation(transform.position - sphere.transform.position);
-                    var go = list[list.Count - 1];
-                    list.Remove(go);
-                    var gop = go.transform.parent.gameObject;
-                    Destroy(go);
-                    Destroy(gop);
-                    StopCoroutine("pickupDecay");
-                    StartCoroutine("pickupDecay");
+                    sHead.addBodyPart();
                     score++;
                     scoreText.text = "Score : " + score.ToString();
                 }
             }
-        }
-
     private IEnumerator pickupDecay()
     {
         yield return new WaitForSeconds(lifeTime);

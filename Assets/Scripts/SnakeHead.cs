@@ -5,13 +5,12 @@ using UnityEngine.SceneManagement;
 
 public class SnakeHead : MonoBehaviour
 {
-    public float growTime = 5;
     private float moveSpeed;
     private Transform origin, prevPart = null;
     private List<GameObject> snakeBodyPartsList;
     public Mesh mesh;
     public Material bugMat;
-    private GameObject body, sphere;
+    private GameObject body, sphere, snakeHead;
     private RaycastHit hit;
 
     void Start()
@@ -22,7 +21,7 @@ public class SnakeHead : MonoBehaviour
         transform.parent = origin;
         snakeBodyPartsList = new List<GameObject>();
         snakeBodyPartsList.Add(gameObject);
-        StartCoroutine("addBodyPart");
+        snakeHead = GameObject.Find("Snake Head");
     }
 
     void Update()
@@ -34,14 +33,19 @@ public class SnakeHead : MonoBehaviour
 
         foreach (GameObject part in snakeBodyPartsList)
         {
-            moveSpeed = 30 + (snakeBodyPartsList.Count * 2.5f);
+            moveSpeed = 30 + (snakeBodyPartsList.Count * 2);
             if (part == gameObject)
             {
                 if (Input.GetKey("a") || Input.GetKey("d"))
                 {
                     var turnRate = Input.GetKey("a") ? -120 : 120;
                     part.transform.parent.Rotate(0, 0, turnRate * Time.deltaTime);
-                    moveSpeed /= 1.3f;
+                    snakeHead.transform.localRotation = Quaternion.Lerp(snakeHead.transform.localRotation, new Quaternion (0,0,turnRate/120*0.6f, 1), 5* Time.deltaTime);
+                    moveSpeed /= 2;
+                }
+                else
+                {
+                    snakeHead.transform.localRotation = Quaternion.Lerp(snakeHead.transform.localRotation, new Quaternion(0, 0, 0, 1), 5* Time.deltaTime);
                 }
                 part.transform.rotation = Quaternion.LookRotation(transform.forward, part.transform.position - sphere.transform.position);
                 part.transform.parent.rotation = Quaternion.AngleAxis(moveSpeed * Time.deltaTime, Vector3.Cross(part.transform.parent.position - part.transform.position, part.transform.forward)) * part.transform.parent.rotation;
@@ -59,17 +63,14 @@ public class SnakeHead : MonoBehaviour
         }
     }
 
-    private IEnumerator addBodyPart()
+    public void addBodyPart()
     {
-        yield return new WaitForSeconds(1);
         body = createNewGameObject(body, "Body " + snakeBodyPartsList.Count, null, mesh, bugMat, snakeBodyPartsList[snakeBodyPartsList.Count - 1].transform.position, transform.localScale, true, true);
         snakeBodyPartsList.Add(body);
-        if(snakeBodyPartsList.Count > 3)
+        if (snakeBodyPartsList.Count > 3)
         {
             body.tag = "Body";
         }
-        yield return new WaitForSeconds(Mathf.Abs(growTime - 1));
-        StartCoroutine("addBodyPart");
     }
 
     public GameObject createNewGameObject(GameObject uGO, string Name, Transform Parent, Mesh Mesh, Material Material, Vector3 Position, Vector3 localScale, bool needsOrigin, bool needscollider)
