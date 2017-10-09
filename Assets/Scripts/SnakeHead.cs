@@ -15,7 +15,7 @@ public class SnakeHead : MonoBehaviour
 
     void Start()
     {
-        sphere = GameObject.Find("Sphere");
+        sphere = GameObject.Find("Sphere"); //get dodads
         origin = new GameObject("SnakeHead Origin").transform;
         origin.parent = sphere.transform;
         transform.parent = origin;
@@ -26,19 +26,19 @@ public class SnakeHead : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKey(KeyCode.Escape))
+        if (Input.GetKey(KeyCode.Escape)) //press escape to quit game
         {
             Application.Quit();
         }
 
         foreach (GameObject part in snakeBodyPartsList)
         {
-            moveSpeed = 30 + (snakeBodyPartsList.Count * 2);
+            moveSpeed = 30 + (snakeBodyPartsList.Count * 2); //movespeed increased relative to snake length
             if (part == gameObject)
             {
-                if (Input.GetKey("a") || Input.GetKey("d"))
+                if (Input.GetKey("a") || Input.GetKey("d")) //snakecontrols
                 {
-                    var turnRate = Input.GetKey("a") ? -120 : 120;
+                    var turnRate = Input.GetKey("a") ? -140 : 140;
                     part.transform.parent.Rotate(0, 0, turnRate * Time.deltaTime);
                     snakeHead.transform.localRotation = Quaternion.Lerp(snakeHead.transform.localRotation, new Quaternion (0,0,turnRate/120*0.6f, 1), 5* Time.deltaTime);
                     moveSpeed /= 2;
@@ -47,19 +47,20 @@ public class SnakeHead : MonoBehaviour
                 {
                     snakeHead.transform.localRotation = Quaternion.Lerp(snakeHead.transform.localRotation, new Quaternion(0, 0, 0, 1), 5* Time.deltaTime);
                 }
-                part.transform.rotation = Quaternion.LookRotation(transform.forward, part.transform.position - sphere.transform.position);
+
+                part.transform.rotation = Quaternion.LookRotation(transform.forward, part.transform.position - sphere.transform.position); // rotations and movedirection through parent for cartesian translation and reletivity dependacies for the head piece
                 part.transform.parent.rotation = Quaternion.AngleAxis(moveSpeed * Time.deltaTime, Vector3.Cross(part.transform.parent.position - part.transform.position, part.transform.forward)) * part.transform.parent.rotation;
             }
             else
             {
-                part.transform.rotation = Quaternion.LookRotation(prevPart.transform.position, part.transform.position - sphere.transform.position);
+                part.transform.rotation = Quaternion.LookRotation(prevPart.transform.position, part.transform.position - sphere.transform.position); // for each other snake part
                 if (prevPart != null && Vector3.Distance(part.transform.position, prevPart.position) > 0.1f)
                 {
                     part.transform.parent.rotation = Quaternion.AngleAxis(moveSpeed * Time.deltaTime, Vector3.Cross(part.transform.parent.position - part.transform.position, -(prevPart.position - part.transform.position).normalized * 0.125f)) * part.transform.parent.rotation;
                 }
             }
-            returnToSurface(part);
-            prevPart = part.transform;
+            returnToSurface(part); //rts in case of accidental physics
+            prevPart = part.transform; //loop part reference control
         }
     }
 
@@ -67,6 +68,7 @@ public class SnakeHead : MonoBehaviour
     {
         body = createNewGameObject(body, "Body " + snakeBodyPartsList.Count, null, mesh, bugMat, snakeBodyPartsList[snakeBodyPartsList.Count - 1].transform.position, transform.localScale, true, true);
         snakeBodyPartsList.Add(body);
+
         if (snakeBodyPartsList.Count > 3)
         {
             body.tag = "Body";
@@ -75,10 +77,11 @@ public class SnakeHead : MonoBehaviour
 
     public GameObject createNewGameObject(GameObject uGO, string Name, Transform Parent, Mesh Mesh, Material Material, Vector3 Position, Vector3 localScale, bool needsOrigin, bool needscollider)
     {
-        uGO = new GameObject(Name);
+        uGO = new GameObject(Name); //setting up the undefinedgameobject
+
         if (needsOrigin)
         {
-            origin = new GameObject("BodyPart Origin " + snakeBodyPartsList.Count).transform;
+            origin = new GameObject("BodyPart Origin " + snakeBodyPartsList.Count).transform; //whos the daddy?
             origin.parent = sphere.transform;
             uGO.transform.parent = origin;
         }
@@ -86,21 +89,25 @@ public class SnakeHead : MonoBehaviour
         {
             uGO.transform.parent = Parent;
         }
+
         uGO.gameObject.AddComponent<MeshFilter>().mesh = Mesh;
         uGO.AddComponent<MeshRenderer>().material = Material;
         uGO.transform.position = Position;
         uGO.transform.localScale = localScale;
+
         if (needscollider)
         {
             uGO.AddComponent<BoxCollider>().size = Vector3.one;
             uGO.GetComponent<BoxCollider>().isTrigger = true;
         }
+
         uGO.transform.forward = transform.forward;
         uGO.transform.rotation = transform.rotation;
+
         return uGO;
     }
 
-    void returnToSurface(GameObject a)
+    void returnToSurface(GameObject a) //rts in case of accidental physics
     {
         if (Vector3.Distance(a.transform.position, sphere.transform.position) > 1.05)
         {
@@ -118,7 +125,7 @@ public class SnakeHead : MonoBehaviour
         }
     }
 
-    void OnTriggerEnter(Collider other)
+    void OnTriggerEnter(Collider other) // reset game on fuck up
     {
         if (other.GetComponent<Collider>().tag == "Body")
         {
